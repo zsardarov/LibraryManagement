@@ -37,7 +37,7 @@ app.MapGet("/books/{id}", async (Guid id, [FromServices] IBookService service) =
         }
         catch (Exception e)
         {
-            return Results.BadRequest(e);
+            return Results.BadRequest(e.Message);
         }
     })
     .WithOpenApi();
@@ -64,7 +64,7 @@ app.MapGet("/books", async ([FromServices] IBookService service) =>
     }
     catch (Exception e)
     {
-        return Results.BadRequest(e);
+        return Results.BadRequest(e.Message);
     }
 }).WithOpenApi();
 
