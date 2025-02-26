@@ -1,23 +1,16 @@
 ﻿using System.Collections.Concurrent;
-using System.Collections.Immutable;
 using LibraryManagement.Domain;
 using LibraryManagement.Domain.Interfaces;
 
-namespace LibraryManagement.Instrastructure;
+namespace LibraryManagement.Infrastructure.Repositories;
 
 public class InMemoryBookRepository : IBookRepository
 {
-    private ConcurrentDictionary<Guid, Book> _books;
+    private readonly ConcurrentDictionary<Guid, Book> _books = new();
 
-    public InMemoryBookRepository()
-    {
-        _books = new();
-    }
-    
     public Task<Book?> GetBookByIdAsync(Guid bookId)
     {
-        _books.TryGetValue(bookId, out Book book);
-        
+        _books.TryGetValue(bookId, out Book? book);
         return Task.FromResult(book);
     }
 
@@ -34,11 +27,13 @@ public class InMemoryBookRepository : IBookRepository
 
     public Task UpdateBookAsync(Book book)
     {
-        throw new NotImplementedException();
+        _books.TryUpdate(book.Id, book, _books[book.Id]);
+        return Task.CompletedTask;
     }
 
     public Task DeleteBookAsync(Guid bookId)
     {
-        throw new NotImplementedException();
+        _books.TryRemove(bookId, out _);
+        return Task.CompletedTask;
     }
 }

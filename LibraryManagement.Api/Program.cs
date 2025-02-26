@@ -1,8 +1,9 @@
 using LibraryManagement.Application;
 using LibraryManagement.Application.DTO;
+using LibraryManagement.Domain;
 using LibraryManagement.Domain.Exceptions;
 using LibraryManagement.Domain.Interfaces;
-using LibraryManagement.Instrastructure;
+using LibraryManagement.Infrastructure.Repositories;
 using Microsoft.AspNetCore.Mvc;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -33,7 +34,7 @@ app.MapGet("/books/{id}", async (Guid id, [FromServices] IBookService service) =
         }
         catch (BookNotFoundException e)
         {
-            return Results.NotFound();
+            return Results.NotFound(e.Message);
         }
         catch (Exception e)
         {
@@ -67,5 +68,42 @@ app.MapGet("/books", async ([FromServices] IBookService service) =>
         return Results.BadRequest(e.Message);
     }
 }).WithOpenApi();
+
+app.MapPut("/books/update", async ([FromBody] Book book, [FromServices] IBookService service) =>
+    {
+        try
+        {
+            await service.UpdateBookAsync(book);
+            return Results.NoContent();
+        }
+        catch (BookNotFoundException e)
+        {
+            return Results.NotFound(e.Message);
+        }
+        catch (Exception e)
+        {
+            return Results.BadRequest(e.Message);
+        }
+    })
+    .WithOpenApi();
+
+
+app.MapDelete("/books/{id}/delete", async (Guid id, [FromServices] IBookService service) =>
+    {
+        try
+        {
+            await service.DeleteBookAsync(id);
+            return Results.NoContent();
+        }
+        catch (BookNotFoundException e)
+        {
+            return Results.NotFound(e.Message);
+        }
+        catch (Exception e)
+        {
+            return Results.BadRequest(e.Message);
+        }
+    })
+    .WithOpenApi();
 
 app.Run();

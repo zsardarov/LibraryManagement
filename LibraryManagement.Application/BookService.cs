@@ -5,17 +5,11 @@ using LibraryManagement.Domain.Interfaces;
 
 namespace LibraryManagement.Application;
 
-public class BookService : IBookService
+public class BookService(IBookRepository bookRepository) : IBookService
 {
-    private readonly IBookRepository _bookRepository;
-    public BookService(IBookRepository bookRepository)
-    {
-        _bookRepository = bookRepository;
-    }
-    
     public async Task<Book> GetBookByIdAsync(Guid bookId)
     {
-        var book = await _bookRepository.GetBookByIdAsync(bookId);
+        var book = await bookRepository.GetBookByIdAsync(bookId);
         
         if (book == null)
             throw new BookNotFoundException($"Book with id: {bookId} not found");
@@ -27,6 +21,8 @@ public class BookService : IBookService
     {
         if (string.IsNullOrWhiteSpace(book.Author))
             throw new Exception($"Author is required");
+        if (book.Author.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries).Length < 1)
+            throw new Exception($"Author must have at least one name");
         if (string.IsNullOrWhiteSpace(book.Title))
             throw new Exception($"Title is required");
         if (book.DateOfPublication.Date >= DateTime.Now.Date)
@@ -40,11 +36,40 @@ public class BookService : IBookService
             DateOfPublication = book.DateOfPublication
         };
 
-        await _bookRepository.AddBookAsync(entity);
+        await bookRepository.AddBookAsync(entity);
     }
 
     public async Task<IEnumerable<Book>> GetAllBooksAsync()
     {
-        return await _bookRepository.GetAllBooksAsync();
+        return await bookRepository.GetAllBooksAsync();
+    }
+
+    public async Task UpdateBookAsync(Book book)
+    {
+        var existingBook = await bookRepository.GetBookByIdAsync(book.Id);
+        
+        if (existingBook == null)
+            throw new BookNotFoundException($"Book with id: {book.Id} not found");
+        
+        if (string.IsNullOrWhiteSpace(book.Author))
+            throw new Exception($"Author is required");
+        if (book.Author.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries).Length < 1)
+            throw new Exception($"Author must have at least one name");
+        if (string.IsNullOrWhiteSpace(book.Title))
+            throw new Exception($"Title is required");
+        if (book.DateOfPublication.Date >= DateTime.Now.Date)
+            throw new Exception($"Date of publication is invalid");
+        
+        await bookRepository.UpdateBookAsync(book);
+    }
+
+    public async Task DeleteBookAsync(Guid bookId)
+    {
+        var existingBook = await bookRepository.GetBookByIdAsync(bookId);
+        
+        if (existingBook == null)
+            throw new BookNotFoundException($"Book with id: {bookId} not found");
+        
+        await bookRepository.DeleteBookAsync(bookId);
     }
 }
